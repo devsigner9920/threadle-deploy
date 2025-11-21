@@ -1,0 +1,123 @@
+// Prisma schema for Threadle - Cross-Discipline Slack Translator Bot
+// Single-tenant SQLite database for MVP (on-prem deployment)
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+// User model - Stores Slack user profiles and preferences
+model User {
+  id                  String   @id @default(uuid())
+  slackUserId         String   @unique
+  slackWorkspaceId    String
+  role                UserRole
+  language            Language
+  customInstructions  String?
+  preferredStyle      String?
+  isAdmin             Boolean  @default(false)
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  // Relations
+  requestedTranslations Translation[]  @relation("RequestedByUser")
+  feedback              UserFeedback[]
+
+  @@index([slackUserId])
+}
+
+// UserRole enum - Professional disciplines
+enum UserRole {
+  Engineering_Backend
+  Engineering_Frontend
+  Engineering_Mobile
+  Design
+  Product
+  Marketing
+  QA
+  Data
+}
+
+// Language enum - Supported languages
+enum Language {
+  English
+  Spanish
+  French
+  German
+  Japanese
+  Korean
+  Chinese
+}
+
+// Conversation model - Tracks Slack thread conversations
+model Conversation {
+  id              String   @id @default(uuid())
+  slackChannelId  String
+  slackThreadTs   String
+  messageCount    Int
+  firstMessageAt  DateTime
+  lastMessageAt   DateTime
+
+  // Relations
+  translations Translation[]
+
+  @@unique([slackChannelId, slackThreadTs])
+  @@index([slackChannelId, slackThreadTs])
+}
+
+// Translation model - Stores LLM-generated translations
+model Translation {
+  id                 String   @id @default(uuid())
+  conversationId     String
+  requestedByUserId  String
+  originalMessages   String   // JSON stored as string
+  translatedContent  String   // Text content
+  targetRole         String
+  language           String
+  llmProvider        String
+  tokenUsage         Int
+  createdAt          DateTime @default(now())
+
+  // Relations
+  conversation     Conversation   @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  requestedByUser  User           @relation("RequestedByUser", fields: [requestedByUserId], references: [id], onDelete: Cascade)
+  feedback         UserFeedback[]
+
+  @@index([requestedByUserId])
+  @@index([conversationId])
+}
+
+// UserFeedback model - Tracks user feedback on translations
+model UserFeedback {
+  id            String         @id @default(uuid())
+  translationId String
+  userId        String
+  rating        FeedbackRating
+  comment       String?
+  createdAt     DateTime       @default(now())
+
+  // Relations
+  translation Translation @relation(fields: [translationId], references: [id], onDelete: Cascade)
+  user        User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([translationId, userId])
+  @@index([translationId])
+  @@index([userId])
+}
+
+// FeedbackRating enum - Thumbs up/down ratings
+enum FeedbackRating {
+  thumbs_up
+  thumbs_down
+}
+
+// Settings model - Key-value store for global configuration
+model Settings {
+  id        String   @id @default(uuid())
+  key       String   @unique
+  value     String
+  updatedAt DateTime @updatedAt
+}

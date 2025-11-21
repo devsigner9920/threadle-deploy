@@ -1,0 +1,78 @@
+# Dependencies
+node_modules/
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+
+# Build output
+dist/
+build/
+*.tsbuildinfo
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+secrets.encrypted
+
+# Data directories
+data/
+*.db
+*.db-shm
+*.db-wal
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Testing
+coverage/
+.nyc_output/
+playwright-report/
+test-results/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+
+# Threadle specific
+.threadle/
+threadle.pid
+
+# Generated code
+/generated/prisma
+
+# Client build
+client/dist/
+
+# Package artifacts
+*.tgz
+
+# Internal documentation (implementation notes)
+agent-os/
+prd.md
+TASK_GROUP_*.md
+IMPLEMENTATION_SUMMARY.md
+TEST_SUMMARY.txt
+*_FILES.md
+*_VERIFICATION.md
+DOCKER_PUBLISHING_GUIDE.md
+
+# Claude Code tooling
+.claude/

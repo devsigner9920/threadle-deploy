@@ -1,0 +1,61 @@
+version: '3.8'
+
+services:
+  threadle:
+    image: threadle/threadle:latest
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: threadle
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    volumes:
+      # Mount local directory for data persistence
+      - ./threadle-data:/app/data
+    environment:
+      # Server configuration
+      - NODE_ENV=production
+      - PORT=3000
+
+      # Database configuration
+      - DATABASE_URL=file:/app/data/threadle.db
+
+      # Optional: Slack configuration (can be set via web UI)
+      # - SLACK_BOT_TOKEN=${SLACK_BOT_TOKEN}
+      # - SLACK_SIGNING_SECRET=${SLACK_SIGNING_SECRET}
+      # - SLACK_APP_TOKEN=${SLACK_APP_TOKEN}
+
+      # Optional: LLM API keys (can be set via web UI)
+      # - OPENAI_API_KEY=${OPENAI_API_KEY}
+      # - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      # - GOOGLE_AI_API_KEY=${GOOGLE_AI_API_KEY}
+
+      # Optional: JWT secret for authentication
+      # - JWT_SECRET=${JWT_SECRET}
+
+      # Optional: Custom configuration directory
+      # - CONFIG_DIR=/app/data/config
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    labels:
+      - "com.threadle.description=Threadle Slack Translation Bot"
+      - "com.threadle.version=1.0.0"
+    # Resource limits (adjust based on your needs)
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 512M
+        reservations:
+          cpus: '0.25'
+          memory: 256M
+
+# Named volume for easier management (alternative to bind mount)
+volumes:
+  threadle-data:
+    driver: local

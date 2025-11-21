@@ -1,0 +1,79 @@
+# Git files
+.git
+.gitignore
+
+# Dependencies
+node_modules
+client/node_modules
+
+# Build outputs (will be built in container)
+dist
+client/dist
+
+# Test files
+__tests__
+*.test.ts
+*.test.tsx
+*.spec.ts
+*.spec.tsx
+coverage
+.nyc_output
+
+# Development files
+.env
+.env.local
+.env.development
+.env.test
+
+# IDE and editor files
+.vscode
+.idea
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Documentation (except essential ones)
+*.md
+!README.md
+!DOCKER_README.md
+!LICENSE
+
+# Temporary files
+tmp
+temp
+*.tmp
+
+# Data directories (will be mounted as volumes)
+data
+threadle-data
+*.db
+*.db-shm
+*.db-wal
+
+# Package tarballs
+*.tgz
+
+# Husky hooks
+.husky
+
+# CI/CD
+.github
+.gitlab-ci.yml
+
+# Task and planning files
+agent-os
+prd.md
+TASK_GROUP_*.md
+NPM_PUBLISHING_GUIDE.md
+SLACK_APP_SETUP.md
+
+# Claude artifacts
+.claude
