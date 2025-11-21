@@ -1,5 +1,10 @@
 # Threadle
 
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.3-blue.svg)](https://www.typescriptlang.org/)
+[![Node.js](https://img.shields.io/badge/Node.js-%E2%89%A520.0.0-green.svg)](https://nodejs.org/)
+[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](https://github.com/devsigner9920/threadle/pulls)
+
 > Cross-discipline Slack translator bot powered by LLM - Helping teams communicate across technical boundaries.
 
 Threadle is an open-source Slack bot that translates technical jargon between professional disciplines (engineers, designers, marketers, PMs) using AI-powered explanations. Install it as a global npm package or run it via Docker in minutes.
@@ -37,6 +42,7 @@ threadle init
 ```
 
 This creates `~/.threadle/` directory with:
+
 - `config.json` - Application configuration
 - `secrets.encrypted` - Encrypted API keys and tokens
 - `data/` - SQLite database storage
@@ -103,12 +109,15 @@ For detailed Docker instructions, see [DOCKER_README.md](DOCKER_README.md)
 The first time you run `threadle start`, you'll be guided through a 6-step setup wizard:
 
 ### Step 1: Welcome & Prerequisites
+
 - Verifies Node.js version (20+)
 - Checks network connectivity
 - Links to Slack App creation guide
 
 ### Step 2: AI Provider Configuration
+
 Select your preferred LLM provider:
+
 - **OpenAI** (GPT-4, GPT-4 Turbo)
 - **Anthropic** (Claude 3.5 Sonnet, Claude 3 Opus)
 - **Google** (Gemini Pro, Gemini Ultra)
@@ -116,7 +125,9 @@ Select your preferred LLM provider:
 Enter your API key (stored encrypted locally).
 
 ### Step 3: Slack App Setup
+
 Follow the guided instructions to:
+
 1. Create a Slack App at [api.slack.com/apps](https://api.slack.com/apps)
 2. Configure Bot Token Scopes:
    - `chat:write` - Send messages
@@ -126,16 +137,20 @@ Follow the guided instructions to:
 3. Enter App ID, Client ID, Client Secret, and Signing Secret
 
 ### Step 4: Slack OAuth Installation
+
 Click "Install to Workspace" to authorize Threadle in your Slack workspace.
 
 ### Step 5: Global Default Settings
+
 Configure defaults:
+
 - **Translation Style**: ELI5, Business Summary, Technical Lite, or Analogies Only
 - **Language**: English, Spanish, French, German, etc.
 - **Rate Limiting**: Requests per user per minute (default: 10)
 - **Cache TTL**: How long to cache translations (default: 1 hour)
 
 ### Step 6: Admin Account Creation
+
 Set yourself as the admin user using your Slack User ID.
 
 ## Creating a Slack App
@@ -164,6 +179,7 @@ Detailed guide: `/SLACK_APP_SETUP.md` in the package
 ### In Slack
 
 #### `/explain` Command
+
 Get an AI-powered explanation of the current thread:
 
 ```
@@ -177,6 +193,7 @@ Request a public explanation (visible to all):
 ```
 
 #### `/setprofile` Command
+
 Update your role and preferences:
 
 ```
@@ -184,12 +201,14 @@ Update your role and preferences:
 ```
 
 Opens a modal where you can set:
+
 - Professional role (Engineering, Design, Product, Marketing, etc.)
 - Preferred language
 - Translation style preference
 - Custom instructions for personalized explanations
 
 #### `/help` Command
+
 Display comprehensive help:
 
 ```
@@ -201,23 +220,27 @@ Display comprehensive help:
 Navigate to http://localhost:3000 after starting the server.
 
 #### Dashboard (/)
+
 - View workspace status
 - See usage statistics
 - Browse recent translations
 - Quick links to profile and settings
 
 #### Profile (/profile)
+
 - Update your role
 - Set language preference
 - Choose translation style
 - Add custom instructions
 
 #### Translation History (/history)
+
 - View all your past translations
 - Filter by date range
 - Paginated results
 
 #### Admin Settings (/admin) - Admin Only
+
 - Manage global settings
 - View all users
 - Update LLM provider configuration
@@ -294,21 +317,26 @@ npm run docker:compose:logs
 ## Deployment Options
 
 ### Local npm Installation
+
 Perfect for personal use or small teams. Simple installation, runs on your local machine.
 
 **Pros:**
+
 - Easiest to set up
 - Direct access to configuration files
 - No Docker required
 
 **Cons:**
+
 - Requires Node.js installed
 - Manual process management
 
 ### Docker Deployment
+
 Ideal for production deployments, server installations, or when you prefer containerization.
 
 **Pros:**
+
 - Isolated environment
 - Easy updates (`docker-compose pull`)
 - Auto-restart on failure
@@ -316,6 +344,7 @@ Ideal for production deployments, server installations, or when you prefer conta
 - Simple backup/restore (volume snapshots)
 
 **Cons:**
+
 - Requires Docker installed
 - Slightly larger disk footprint
 
@@ -346,6 +375,7 @@ See [DOCKER_README.md](DOCKER_README.md) for detailed Docker deployment instruct
 **Problem**: Slash commands don't respond
 
 **Solution**:
+
 1. Check server is running: `curl http://localhost:3000/health`
 2. Verify Slack App Request URL is correct
 3. Check signing secret matches in setup wizard
@@ -356,6 +386,7 @@ See [DOCKER_README.md](DOCKER_README.md) for detailed Docker deployment instruct
 **Problem**: "Invalid token" error
 
 **Solution**:
+
 1. Re-run setup wizard from web UI
 2. Verify Slack bot token is correct
 3. Reinstall Slack App to workspace
@@ -365,6 +396,7 @@ See [DOCKER_README.md](DOCKER_README.md) for detailed Docker deployment instruct
 **Problem**: "Invalid API key" error
 
 **Solution**:
+
 1. Verify API key in Admin Settings
 2. Test connection from web UI
 3. Check API key has required permissions
@@ -375,6 +407,7 @@ See [DOCKER_README.md](DOCKER_README.md) for detailed Docker deployment instruct
 **Problem**: Slow response times
 
 **Solution**:
+
 1. Check network connectivity
 2. Increase cache TTL in config
 3. Consider switching to faster LLM provider
@@ -385,6 +418,7 @@ See [DOCKER_README.md](DOCKER_README.md) for detailed Docker deployment instruct
 **Problem**: "Database locked" error
 
 **Solution**:
+
 1. Stop server: `threadle stop`
 2. Wait 10 seconds
 3. Restart: `threadle start`
@@ -395,6 +429,7 @@ See [DOCKER_README.md](DOCKER_README.md) for detailed Docker deployment instruct
 **Problem**: Lost data after update
 
 **Solution**:
+
 1. Database is stored in `~/.threadle/data/threadle.db`
 2. Check if file exists and has content
 3. Restore from backup if available
@@ -404,6 +439,7 @@ See [DOCKER_README.md](DOCKER_README.md) for detailed Docker deployment instruct
 **Problem**: Container won't start
 
 **Solution**:
+
 1. Check Docker logs: `docker logs threadle`
 2. Verify volume permissions
 3. Ensure port 3000 is available
@@ -413,6 +449,7 @@ See [DOCKER_README.md](DOCKER_README.md) for detailed Docker deployment instruct
 **Problem**: Data not persisting
 
 **Solution**:
+
 1. Verify volume is mounted correctly
 2. Check docker-compose.yml volume configuration
 3. Use named volumes or bind mounts consistently
@@ -541,6 +578,7 @@ MIT License - see [LICENSE](LICENSE) for details
 ## Acknowledgments
 
 Built with:
+
 - [Express.js](https://expressjs.com/)
 - [React](https://react.dev/)
 - [Prisma](https://www.prisma.io/)
