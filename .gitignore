@@ -19,6 +19,9 @@ secrets.encrypted
 gcp-key.json
 *-key.json
 
+# SSL certificates
+certbot/
+
 # Data directories
 data/
 *.db

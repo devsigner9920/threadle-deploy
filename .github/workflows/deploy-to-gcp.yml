@@ -23,10 +23,11 @@ jobs:
       - name: Set up Cloud SDK
         uses: google-github-actions/setup-gcloud@v2
 
-      - name: Deploy to VM
+      - name: Deploy to VM with Docker
         env:
           VM_NAME: ${{ secrets.GCP_VM_NAME }}
           ZONE: ${{ secrets.GCP_ZONE }}
+          DOMAIN: threadle.dvsgn-t01.dev
         run: |
           # Create deployment script
           cat > deploy.sh << 'EOF'
@@ -38,11 +39,20 @@ jobs:
 
           echo "🔄 Updating application..."
 
-          # Install Node.js if not present
-          if ! command -v node &> /dev/null; then
-            echo "📦 Installing Node.js..."
-            curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
-            sudo apt-get install -y nodejs git build-essential
+          # Install Docker if not present
+          if ! command -v docker &> /dev/null; then
+            echo "📦 Installing Docker..."
+            curl -fsSL https://get.docker.com -o get-docker.sh
+            sudo sh get-docker.sh
+            sudo usermod -aG docker $USER
+            rm get-docker.sh
+          fi
+
+          # Install Docker Compose if not present
+          if ! command -v docker-compose &> /dev/null; then
+            echo "📦 Installing Docker Compose..."
+            sudo curl -L "https://github.com/docker/compose/releases/download/v2.24.0/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+            sudo chmod +x /usr/local/bin/docker-compose
           fi
 
           # Clone or update repository
@@ -51,6 +61,7 @@ jobs:
             cd $APP_DIR
             sudo git fetch origin
             sudo git reset --hard origin/main
+            sudo chown -R $USER:$USER $APP_DIR
           else
             echo "📥 Cloning repository..."
             sudo git clone $REPO_URL $APP_DIR
@@ -59,65 +70,28 @@ jobs:
 
           cd $APP_DIR
 
-          # Set environment variables for build
-          export DATABASE_URL="file:./data/threadle.db"
-
-          # Install dependencies
-          echo "📦 Installing dependencies..."
-          npm ci
-
-          # Install client dependencies first
-          echo "📦 Installing client dependencies..."
-          cd client
-          npm install
-          cd ..
-
-          # Build application
-          echo "🔨 Building application..."
-          npm run build:prisma
-          npm run build:server
-          npm run build:client
-
-          # Create or update systemd service
-          echo "⚙️ Setting up systemd service..."
-          sudo tee /etc/systemd/system/threadle.service > /dev/null << SERVICE
-          [Unit]
-          Description=Threadle Slack Translator Bot
-          After=network.target
-
-          [Service]
-          Type=simple
-          User=$USER
-          WorkingDirectory=$APP_DIR
-          ExecStart=/usr/bin/node $APP_DIR/dist/server/index.js
-          Restart=always
-          RestartSec=10
-          StandardOutput=journal
-          StandardError=journal
-          SyslogIdentifier=threadle
-
-          Environment=NODE_ENV=production
-          Environment=PORT=3000
-
-          [Install]
-          WantedBy=multi-user.target
-          SERVICE
-
-          # Reload systemd and restart service
-          sudo systemctl daemon-reload
-          sudo systemctl enable threadle
-
-          if sudo systemctl is-active --quiet threadle; then
-            echo "🔄 Restarting service..."
-            sudo systemctl restart threadle
-          else
-            echo "🚀 Starting service..."
-            sudo systemctl start threadle
+          # Stop old systemd service if running
+          if sudo systemctl is-active --quiet threadle 2>/dev/null; then
+            echo "🛑 Stopping old systemd service..."
+            sudo systemctl stop threadle
+            sudo systemctl disable threadle
           fi
 
-          # Wait and check status
-          sleep 3
-          sudo systemctl status threadle --no-pager || true
+          # Check if certificates exist
+          if [ ! -d "certbot/conf/live/threadle.dvsgn-t01.dev" ]; then
+            echo "🔐 Initializing SSL certificates..."
+            chmod +x init-letsencrypt.sh
+            ./init-letsencrypt.sh
+          else
+            echo "🐳 Starting services with Docker Compose..."
+            docker-compose -f docker-compose.prod.yml up -d --build
+          fi
+
+          # Wait for services to start
+          sleep 10
+
+          # Check service status
+          docker-compose -f docker-compose.prod.yml ps
 
           echo "✅ Deployment completed!"
           EOF
@@ -133,14 +107,18 @@ jobs:
       - name: Health Check
         run: |
           echo "🏥 Running health check..."
-          sleep 10
+          sleep 15
 
-          EXTERNAL_IP="${{ secrets.VM_EXTERNAL_IP }}"
+          DOMAIN="threadle.dvsgn-t01.dev"
 
           for i in {1..5}; do
-            if curl -f -s http://$EXTERNAL_IP:3000/health > /dev/null; then
+            if curl -f -s https://$DOMAIN/health > /dev/null 2>&1; then
               echo "✅ Health check passed!"
-              curl -s http://$EXTERNAL_IP:3000/health | jq
+              curl -s https://$DOMAIN/health | jq || true
+              exit 0
+            elif curl -f -s http://$DOMAIN/health > /dev/null 2>&1; then
+              echo "✅ Health check passed (HTTP)!"
+              curl -s http://$DOMAIN/health | jq || true
               exit 0
             fi
             echo "⏳ Waiting for service to start (attempt $i/5)..."
@@ -161,5 +139,5 @@ jobs:
           echo "Branch: ${{ github.ref_name }}"
           echo "VM: ${{ secrets.GCP_VM_NAME }}"
           echo "Zone: ${{ secrets.GCP_ZONE }}"
-          echo "URL: http://${{ secrets.VM_EXTERNAL_IP }}:3000"
+          echo "URL: https://threadle.dvsgn-t01.dev"
           echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
