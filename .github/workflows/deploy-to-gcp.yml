@@ -68,7 +68,7 @@ jobs:
 
           # Install client dependencies and build
           cd client
-          npm ci
+          npm install
           cd ..
 
           # Build application
