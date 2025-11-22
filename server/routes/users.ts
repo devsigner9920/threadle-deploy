@@ -17,8 +17,23 @@ const configService = new ConfigService();
 configService.load();
 
 const secretsService = new SecretsService();
-const slackClient = createSlackClient(secretsService);
-const userService = new UserService(slackClient);
+
+// Lazy initialize SlackClient only if setup is completed
+let slackClient: ReturnType<typeof createSlackClient> | null = null;
+let userService: UserService | null = null;
+
+function ensureServicesInitialized() {
+  if (!configService.get('setupCompleted')) {
+    throw new Error('Application setup not completed');
+  }
+
+  if (!slackClient) {
+    slackClient = createSlackClient(secretsService);
+    userService = new UserService(slackClient);
+  }
+
+  return { slackClient, userService: userService! };
+}
 
 // Apply authentication middleware to all user routes
 const authMiddleware = createAuthMiddleware(configService);
@@ -53,6 +68,9 @@ router.get('/profile', authMiddleware, async (req: Request, res: Response): Prom
     }
 
     console.log(`[UserRoutes] Fetching profile for user: ${userId}`);
+
+    // Ensure services are initialized
+    const { userService } = ensureServicesInitialized();
 
     // Fetch user profile from database
     const user = await userService.getUserById(userId);
@@ -128,6 +146,9 @@ router.put('/profile', authMiddleware, async (req: Request, res: Response): Prom
     const updates = validation.data;
 
     // Convert role and language strings to enums if provided
+    // Ensure services are initialized
+    const { userService } = ensureServicesInitialized();
+
     const updateData: any = {};
 
     if (updates.role) {

@@ -37,6 +37,13 @@ function getTranslationService(): TranslationService {
  */
 function getUserService(): UserService {
   if (!userService) {
+    const configService = new ConfigService();
+    configService.load();
+
+    if (!configService.get('setupCompleted')) {
+      throw new Error('Application setup not completed');
+    }
+
     const secretsService = new SecretsService();
     const slackClient = createSlackClient(secretsService);
     userService = new UserService(slackClient);
