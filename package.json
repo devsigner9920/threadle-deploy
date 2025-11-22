@@ -20,7 +20,7 @@
     "LICENSE"
   ],
   "scripts": {
-    "build": "npm run build:server && npm run build:client && npm run build:prisma",
+    "build": "npm run build:prisma && npm run build:server && npm run build:client",
     "build:server": "tsc",
     "build:client": "cd client && npm run build && cd ..",
     "build:prisma": "prisma generate",
