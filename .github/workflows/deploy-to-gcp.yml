@@ -46,6 +46,11 @@ jobs:
             sudo sh get-docker.sh
             sudo usermod -aG docker $USER
             rm get-docker.sh
+
+            # Apply docker group without logout
+            newgrp docker << SUBSHELL
+            echo "Docker group applied"
+            SUBSHELL
           fi
 
           # Install Docker Compose if not present
@@ -53,6 +58,11 @@ jobs:
             echo "📦 Installing Docker Compose..."
             sudo curl -L "https://github.com/docker/compose/releases/download/v2.24.0/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
             sudo chmod +x /usr/local/bin/docker-compose
+          fi
+
+          # Ensure current user can use docker
+          if ! groups | grep -q docker; then
+            sudo usermod -aG docker $USER
           fi
 
           # Clone or update repository
@@ -81,17 +91,31 @@ jobs:
           if [ ! -d "certbot/conf/live/threadle.dvsgn-t01.dev" ]; then
             echo "🔐 Initializing SSL certificates..."
             chmod +x init-letsencrypt.sh
-            ./init-letsencrypt.sh
+
+            # Run with sudo or sg docker to avoid permission issues
+            if groups | grep -q docker; then
+              sg docker -c "./init-letsencrypt.sh"
+            else
+              sudo ./init-letsencrypt.sh
+            fi
           else
             echo "🐳 Starting services with Docker Compose..."
-            docker-compose -f docker-compose.prod.yml up -d --build
+            if groups | grep -q docker; then
+              sg docker -c "docker-compose -f docker-compose.prod.yml up -d --build"
+            else
+              sudo docker-compose -f docker-compose.prod.yml up -d --build
+            fi
           fi
 
           # Wait for services to start
           sleep 10
 
           # Check service status
-          docker-compose -f docker-compose.prod.yml ps
+          if groups | grep -q docker; then
+            sg docker -c "docker-compose -f docker-compose.prod.yml ps"
+          else
+            sudo docker-compose -f docker-compose.prod.yml ps
+          fi
 
           echo "✅ Deployment completed!"
           EOF
