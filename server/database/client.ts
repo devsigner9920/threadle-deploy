@@ -4,7 +4,6 @@
  */
 
 import { PrismaClient } from '@prisma/client';
-import { PrismaLibSql } from '@prisma/adapter-libsql';
 import path from 'path';
 import os from 'os';
 
@@ -23,15 +22,10 @@ export function getPrismaClient(): PrismaClient {
     if (!databaseUrl) {
       const dbPath = path.join(os.homedir(), '.threadle', 'data', 'threadle.db');
       databaseUrl = `file:${dbPath}`;
+      process.env['DATABASE_URL'] = databaseUrl;
     }
 
-    // Create adapter with config
-    const adapter = new PrismaLibSql({
-      url: databaseUrl,
-    });
-
     prisma = new PrismaClient({
-      adapter,
       log: process.env['NODE_ENV'] === 'development' ? ['query', 'error', 'warn'] : ['error'],
     });
   }
