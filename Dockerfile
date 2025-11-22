@@ -57,8 +57,9 @@ COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/client/dist ./client/dist
 COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
 
-# Copy Prisma schema and migrations
+# Copy Prisma schema, config, and migrations
 COPY prisma ./prisma
+COPY prisma.config.ts ./prisma.config.ts
 
 # Copy prompts directory
 COPY prompts ./prompts
