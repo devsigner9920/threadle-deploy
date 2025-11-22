@@ -1,0 +1,159 @@
+name: Deploy to GCP
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    name: Deploy to GCP VM
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Deploy to VM
+        env:
+          VM_NAME: ${{ secrets.GCP_VM_NAME }}
+          ZONE: ${{ secrets.GCP_ZONE }}
+        run: |
+          # Create deployment script
+          cat > deploy.sh << 'EOF'
+          #!/bin/bash
+          set -e
+
+          APP_DIR="/home/threadle-app"
+          REPO_URL="https://github.com/${{ github.repository }}.git"
+
+          echo "🔄 Updating application..."
+
+          # Install Node.js if not present
+          if ! command -v node &> /dev/null; then
+            echo "📦 Installing Node.js..."
+            curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
+            sudo apt-get install -y nodejs git build-essential
+          fi
+
+          # Clone or update repository
+          if [ -d "$APP_DIR" ]; then
+            echo "📥 Pulling latest changes..."
+            cd $APP_DIR
+            sudo git fetch origin
+            sudo git reset --hard origin/main
+          else
+            echo "📥 Cloning repository..."
+            sudo git clone $REPO_URL $APP_DIR
+            sudo chown -R $USER:$USER $APP_DIR
+          fi
+
+          cd $APP_DIR
+
+          # Install dependencies
+          echo "📦 Installing dependencies..."
+          npm install --production
+
+          # Install client dependencies and build
+          cd client
+          npm install --production
+          cd ..
+
+          # Build application
+          echo "🔨 Building application..."
+          npm run build
+
+          # Create or update systemd service
+          echo "⚙️ Setting up systemd service..."
+          sudo tee /etc/systemd/system/threadle.service > /dev/null << 'SERVICE'
+          [Unit]
+          Description=Threadle Slack Translator Bot
+          After=network.target
+
+          [Service]
+          Type=simple
+          User=$USER
+          WorkingDirectory=$APP_DIR
+          ExecStart=/usr/bin/node $APP_DIR/dist/server/index.js
+          Restart=always
+          RestartSec=10
+          StandardOutput=journal
+          StandardError=journal
+          SyslogIdentifier=threadle
+
+          Environment=NODE_ENV=production
+          Environment=PORT=3000
+
+          [Install]
+          WantedBy=multi-user.target
+          SERVICE
+
+          # Reload systemd and restart service
+          sudo systemctl daemon-reload
+          sudo systemctl enable threadle
+
+          if sudo systemctl is-active --quiet threadle; then
+            echo "🔄 Restarting service..."
+            sudo systemctl restart threadle
+          else
+            echo "🚀 Starting service..."
+            sudo systemctl start threadle
+          fi
+
+          # Wait and check status
+          sleep 3
+          sudo systemctl status threadle --no-pager || true
+
+          echo "✅ Deployment completed!"
+          EOF
+
+          # Make script executable
+          chmod +x deploy.sh
+
+          # Copy script to VM and execute
+          gcloud compute scp deploy.sh $VM_NAME:~/deploy.sh --zone=$ZONE
+
+          gcloud compute ssh $VM_NAME --zone=$ZONE --command="bash ~/deploy.sh"
+
+      - name: Health Check
+        run: |
+          echo "🏥 Running health check..."
+          sleep 10
+
+          EXTERNAL_IP="${{ secrets.VM_EXTERNAL_IP }}"
+
+          for i in {1..5}; do
+            if curl -f -s http://$EXTERNAL_IP:3000/health > /dev/null; then
+              echo "✅ Health check passed!"
+              curl -s http://$EXTERNAL_IP:3000/health | jq
+              exit 0
+            fi
+            echo "⏳ Waiting for service to start (attempt $i/5)..."
+            sleep 10
+          done
+
+          echo "❌ Health check failed after 5 attempts"
+          exit 1
+
+      - name: Deployment Summary
+        if: always()
+        run: |
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo "📊 Deployment Summary"
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo "Repository: ${{ github.repository }}"
+          echo "Commit: ${{ github.sha }}"
+          echo "Branch: ${{ github.ref_name }}"
+          echo "VM: ${{ secrets.GCP_VM_NAME }}"
+          echo "Zone: ${{ secrets.GCP_ZONE }}"
+          echo "URL: http://${{ secrets.VM_EXTERNAL_IP }}:3000"
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"

@@ -15,6 +15,10 @@ build/
 .env.*.local
 secrets.encrypted
 
+# GCP credentials
+gcp-key.json
+*-key.json
+
 # Data directories
 data/
 *.db

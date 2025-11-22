@@ -350,6 +350,48 @@ Ideal for production deployments, server installations, or when you prefer conta
 
 See [DOCKER_README.md](DOCKER_README.md) for detailed Docker deployment instructions.
 
+### GCP Deployment with GitHub Actions
+
+Automatically deploy to Google Cloud Platform Compute Engine VM using GitHub Actions.
+
+**Prerequisites:**
+
+1. GCP VM instance running
+2. GCP Service Account with necessary permissions
+3. GitHub Secrets configured
+
+**Setup Steps:**
+
+1. Create GCP Service Account and download JSON key
+2. Add GitHub Secrets (Settings → Secrets and variables → Actions):
+   - `GCP_PROJECT_ID`: Your GCP project ID
+   - `GCP_SA_KEY`: Service account JSON key content
+   - `GCP_VM_NAME`: VM instance name
+   - `GCP_ZONE`: VM zone (e.g., asia-northeast3-a)
+   - `VM_EXTERNAL_IP`: VM external IP address
+
+3. Push to main branch to trigger deployment:
+   ```bash
+   git push origin main
+   ```
+
+Or manually trigger deployment from GitHub Actions tab.
+
+**Monitoring:**
+
+```bash
+# SSH into VM
+gcloud compute ssh [VM_NAME] --zone=[ZONE]
+
+# Check service status
+sudo systemctl status threadle
+
+# View logs
+sudo journalctl -u threadle -f
+```
+
+For detailed GCP deployment instructions, see [GITHUB_ACTIONS_DEPLOY.md](GITHUB_ACTIONS_DEPLOY.md).
+
 ## Troubleshooting
 
 ### Server won't start
