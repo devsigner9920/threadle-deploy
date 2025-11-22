@@ -66,14 +66,17 @@ jobs:
           echo "📦 Installing dependencies..."
           npm ci
 
-          # Install client dependencies and build
+          # Install client dependencies first
+          echo "📦 Installing client dependencies..."
           cd client
           npm install
           cd ..
 
           # Build application
           echo "🔨 Building application..."
-          npm run build
+          npm run build:prisma
+          npm run build:server
+          npm run build:client
 
           # Create or update systemd service
           echo "⚙️ Setting up systemd service..."
