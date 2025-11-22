@@ -59,6 +59,9 @@ jobs:
 
           cd $APP_DIR
 
+          # Set environment variables for build
+          export DATABASE_URL="file:./data/threadle.db"
+
           # Install dependencies
           echo "📦 Installing dependencies..."
           npm ci
