@@ -61,11 +61,11 @@ jobs:
 
           # Install dependencies
           echo "📦 Installing dependencies..."
-          npm install --production
+          npm ci
 
           # Install client dependencies and build
           cd client
-          npm install --production
+          npm ci
           cd ..
 
           # Build application
