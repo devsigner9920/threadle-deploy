@@ -49,8 +49,8 @@ RUN addgroup -g 1001 -S threadle && \
 # Copy package files
 COPY package*.json ./
 
-# Install production dependencies only (with legacy peer deps and ignore scripts)
-RUN npm ci --omit=dev --legacy-peer-deps --ignore-scripts
+# Install all dependencies (with legacy peer deps and ignore scripts)
+RUN npm ci --legacy-peer-deps --ignore-scripts
 
 # Copy built assets from builder stage
 COPY --from=builder /app/dist ./dist
