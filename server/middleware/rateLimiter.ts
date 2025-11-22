@@ -3,7 +3,7 @@
  * Implements per-user rate limiting to prevent abuse
  */
 
-import rateLimit from 'express-rate-limit';
+import rateLimit, { ipKeyGenerator } from 'express-rate-limit';
 import { Request, Response } from 'express';
 import { ConfigService } from '../config/ConfigService.js';
 
@@ -109,7 +109,7 @@ export function createApiRateLimiter(configService?: ConfigService) {
         return `user:${req.user.userId}`;
       }
       // Fall back to IP address for unauthenticated requests
-      return `ip:${req.ip}`;
+      return `ip:${ipKeyGenerator(req)}`;
     },
 
     // Custom handler for rate limit exceeded
@@ -168,7 +168,7 @@ export function createTranslationRateLimiter(configService?: ConfigService) {
       if (req.body?.user_id) {
         return `translation:slack:${req.body.user_id}`;
       }
-      return `translation:ip:${req.ip}`;
+      return `translation:ip:${ipKeyGenerator(req)}`;
     },
 
     handler: (_req: Request, res: Response) => {
